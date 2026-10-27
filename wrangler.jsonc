@@ -10,7 +10,7 @@
   "durable_objects": {"bindings":[{"name":"AGENT","class_name":"ChainPilotAgent"}]},
   "migrations": [{"tag":"v1","new_sqlite_classes":["ChainPilotAgent"]}],
   "triggers": {"crons":["*/5 * * * *"]},
-  "vars": {"CHAIN_ID":"97","EXECUTION_ENABLED":"false"},
+  "vars": {"CHAIN_ID":"97","EXECUTION_ENABLED":"true"},
   "observability": {"enabled":true,"head_sampling_rate":0.1},
   "send_metrics": false
 }

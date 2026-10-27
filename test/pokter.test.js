@@ -69,3 +69,10 @@ test('canonical hashing matches Pokter published independent reference vector',a
  assert.equal(canonicalJson(fixture.content),fixture.canonical);
  assert.equal(keccak256(toBytes(canonicalJson(fixture.content))),fixture.negotiationHash);
 });
+test('A brief that names no borrower is quoted and falls back to the hiring wallet',async()=>{
+ const q=await makeQuote(account,{...input,task_description:'Quote your standard deliverable so a buyer can see the price before hiring.'});
+ assert.equal(q.response.accepted,true);
+ assert.equal(borrowerFromBrief(q.request.task_description,buyer),buyer);
+ assert.throws(()=>borrowerFromBrief('Quote it.'),/exactly one borrower/);
+ await assert.rejects(makeQuote(account,{...input,task_description:`Assess ${buyer} and 0x3333333333333333333333333333333333333333`}),/exactly one borrower/);
+});

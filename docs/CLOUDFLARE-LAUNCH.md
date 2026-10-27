@@ -19,7 +19,7 @@ npx wrangler login --scopes account:read user:read workers:write workers_scripts
 npm run cloud:deploy
 ```
 
-The initial deployment sets `EXECUTION_ENABLED=false`. Analysis and discovery work, but paid quotes decline until the identity is configured and execution is explicitly enabled. The service generates its own testnet wallet in private Durable Object storage. Only its address is returned by `/health` and `/v1/config`. No endpoint exports its key or accepts arbitrary signing requests.
+For a new deployment, set `EXECUTION_ENABLED=false` before deploying. The checked-in configuration currently enables execution for the existing configured ChainPilot service. Analysis and discovery work, but paid quotes decline until the identity is configured and execution is explicitly enabled. The service generates its own testnet wallet in private Durable Object storage. Only its address is returned by `/health` and `/v1/config`. No endpoint exports its key or accepts arbitrary signing requests.
 
 ## Operator sequence
 

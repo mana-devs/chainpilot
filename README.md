@@ -2,7 +2,7 @@
 
 A modular BNB Chain assistant. **Position Guard** is the first working module: read a Venus isolated-pool position, detect elevated liquidation risk, and repay debt from a user-funded reserve with limits enforced by a contract.
 
-**Development release · BSC testnet only · Not audited.** Local acceptance covers signed enrollment and subscription-gated execution, plus supply, borrowing and repayment against real Venus contracts on a local testnet fork. Read-only checks also pass against the deployed Venus testnet contracts. Public contract deployment, ERC-8004 registration, hosting and marketplace listing are still pending. Local transactions are not campaign evidence.
+**Development release · BSC testnet only · Not audited.** Local acceptance covers signed enrollment and subscription-gated execution, plus supply, borrowing and repayment against real Venus contracts on a local testnet fork. Read-only checks also pass against the deployed Venus testnet contracts. The live Cloudflare service is registered as ERC-8004 agent **2677** on BNB testnet, with its service wallet bound and execution enabled. Pokter’s fresh compatibility check passed on October 27, 2026; its catalogue may still show an older quote measurement. A complete funded hire, delivery and settlement have not yet been verified. The Position Guard factory and repayment vaults are not deployed. Local transactions are not campaign evidence.
 
 ## Run it
 
@@ -30,7 +30,7 @@ node --env-file=.env src/server.js
 npm run worker
 ```
 
-The web server never signs transactions. The worker defaults to monitor-only and requires an explicit execution setting, verified vault provenance, active paid subscription, and a separate keeper key file before signing anything. Use one worker per keeper. Do not use the campaign owner's private key as the keeper key.
+In the Node deployment, the web server never signs transactions. Its separate worker defaults to monitor-only and requires an explicit execution setting, verified vault provenance, active paid subscription, and a separate keeper key file before signing anything. Use one worker per keeper. Do not use the campaign owner's private key as the keeper key.
 
 ## What works
 
@@ -85,10 +85,11 @@ Keep keys out of chat, command arguments, source, logs and GitHub. The registere
 | Campaign registration | Submitted through Google Forms on October 27, 2026 |
 | Campaign owner | `0xf5506B65e71601991895cD40bD2E875F29cca0da` |
 | Identity network | BSC testnet, chain 97 |
-| Registry ID | **Pending actual registration** |
-| Keeper / factory | **Pending deployment and configuration** |
-| Public endpoint | **Pending stable hosting** |
-| Marketplace listing | **Pending actual listing** |
+| Registry ID | **2677** on the ERC-8004 IdentityRegistry, BSC testnet (chain 97), owned by the campaign owner above |
+| Service wallet | `0x49aE851687Cc05d8e2CC32C5a7bA9bF0e8C14040`, bound to the identity; testnet gas funded |
+| Position Guard factory | **Not deployed** |
+| Public endpoint | https://chainpilot.cryptonaito.workers.dev — Cloudflare Free, persistent SQLite Durable Object and scheduled worker |
+| Marketplace listing | [Pokter agent 2677](https://pokter.xyz/agents/97/2677); fresh compatibility checks pass, catalogue sweep may lag; no completed hire verified |
 | Three independent completed hires | **Pending real users and organizer review** |
 | Five onchain actions across three days | **Pending real category-consistent activity** |
 | Participant's three different-agent hires across two marketplaces | **Pending separate hires** |
@@ -112,9 +113,9 @@ The campaign deadline is **November 5, 2026 at 12:00 UTC (1:00 p.m. Lagos)**. Bu
 | `POST /v1/evidence/repayment` | `{ "hash": "0x..." }` verify a repayment receipt |
 | `GET /v1/campaign` | Evidence and outstanding requirements |
 | `POST /mcp` | Stateless MCP JSON-RPC: initialize, tools/list, tools/call |
-| `POST /a2a` | A2A message/send with a borrower in text or data parts |
+| `POST /a2a` | A2A message/send; Cloudflare also supports `negotiate`, `notify_funded`, and `preview` |
 
-MCP tools: `analyze_position`, `inspect_vault`, `campaign_status`. No public HTTP endpoint signs or broadcasts transactions. Browser actions are unsigned until the user's own wallet approves them. Smart-contract-wallet enrollment signatures (ERC-1271) are not implemented; this release supports EOA owners.
+The Node runtime exposes MCP tools `analyze_position`, `inspect_vault`, and `campaign_status`; the Cloudflare runtime exposes `analyze_position`. The Node HTTP server does not sign transactions. With execution enabled, the Cloudflare runtime signs constrained Pokter quotes and submits/settles verified funded jobs using its dedicated service wallet. Operator registration, wallet binding, vault creation and reserve funding are prepared unsigned for the user’s browser wallet. Smart-contract-wallet enrollment signatures (ERC-1271) are not implemented; this release supports EOA owners.
 
 ## Checks and evidence
 
@@ -132,4 +133,6 @@ Tests do not constitute a security audit. Public-protocol repayment execution an
 
 ## Free Cloudflare hosting and Pokter
 
-The Cloudflare runtime uses SQLite-backed Durable Objects for durable state and scheduled work. See [Cloudflare launch instructions](docs/CLOUDFLARE-LAUNCH.md) for deployment, service-wallet binding and the Pokter escrow flow. Initial deployment disables execution; public-chain acceptance and external Pokter checks remain required. A Pokter risk-report hire does not activate HelloFugu vault subscriptions.
+The Cloudflare runtime uses SQLite-backed Durable Objects for durable state and scheduled work. See [Cloudflare launch instructions](docs/CLOUDFLARE-LAUNCH.md) for deployment, service-wallet binding and the Pokter escrow flow. The checked-in deployment now enables execution for the existing configured testnet service. For a new deployment, set `EXECUTION_ENABLED=false` until identity, wallet binding and gas funding are complete. Fresh external Pokter compatibility checks pass; a complete public testnet hire remains required. A brief that names no borrower is priced for a report on the eventual hiring wallet. A Pokter risk-report hire does not activate HelloFugu vault subscriptions.
+
+`npm run test:cloud` explicitly overrides execution to false in its temporary local runtime, so CI remains isolated from the live execution setting.

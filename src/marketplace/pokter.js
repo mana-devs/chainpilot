@@ -15,14 +15,14 @@ const sort = v => Array.isArray(v) ? v.map(sort) : v && typeof v === 'object'
   ? Object.fromEntries(Object.keys(v).sort().map(k => [k, sort(v[k])])) : v;
 export const canonicalJson = v => JSON.stringify(sort(v)).replace(/[\u007f-\uffff]/g,c=>'\\u'+c.charCodeAt(0).toString(16).padStart(4,'0'));
 const clean = s => [...s.replaceAll('[','(').replaceAll(']',')')].filter(c=>c>=' '||c==='\t'||c==='\n').join('');
-export function borrowerFromBrief(task) {
+export function borrowerFromBrief(task,fallback) {
   if(typeof task!=='string'||task.length>4000) throw new Error('Supply a health-factor brief of at most 4000 characters');
   const matches=[...task.matchAll(/0x[\da-fA-F]{40}\b/g)].map(m=>address(m[0]));
   const unique=[...new Set(matches)];
-  if(unique.length!==1) throw new Error('Name exactly one borrower wallet address in the brief');
+  if(unique.length>1||(unique.length===0&&fallback===undefined)) throw new Error('Name exactly one borrower wallet address in the brief');
   if(/mainnet|chain\s*56|ethereum|aave|compound/i.test(task)) throw new Error('This service supports Venus isolated pools on BNB testnet (97) only');
   if(/\b(swap|trade|transfer|send funds|execute|repay|borrow for me)\b/i.test(task)) throw new Error('This hire delivers a read-only risk report; vault protection is a separate opt-in service');
-  return unique[0];
+  return unique[0]??fallback;
 }
 export function quoteContent(q) {
   const t=q.response.terms;
@@ -32,7 +32,7 @@ export function quoteContent(q) {
     price:t.price,currency:t.currency,quote_expires_at:q.quote_expires_at,chain_id:q.chain_id,verifying_contract:getAddress(q.verifying_contract)};
 }
 export async function makeQuote(account,input,now=Math.floor(Date.now()/1000)) {
-  borrowerFromBrief(input.task_description);
+  borrowerFromBrief(input.task_description,null);
   if(input.chain_id!==97) throw new Error('Only BNB testnet escrow (97) is supported');
   const terms=input.terms;
   if(!terms||typeof terms.deliverables!=='string'||typeof terms.quality_standards!=='string'||!terms.deliverables.trim()||!terms.quality_standards.trim()||terms.deliverables.length>2000||terms.quality_standards.length>2000) throw new Error('Specify deliverables and quality_standards');
@@ -66,7 +66,7 @@ export async function verifyFundedJob(client,config,provider,jobId,lookupQuote,n
   if(!q||envelope.protocol!=='pokter-job'||envelope.version!==1||envelope.category!=='health-factor'||String(envelope.identity?.tokenId)!==config.agentId||Number(envelope.identity?.chainId)!==97||envelope.provider?.toLowerCase()!==provider.toLowerCase()) throw new Error('Job does not match this identity and a saved quote');
   if(envelope.task!==q.request.task_description||envelope.quote.providerSignature!==q.provider_sig||String(envelope.quote.priceRaw)!==q.response.terms.price||job.budget!==BigInt(q.response.terms.price)||Number(envelope.quote.expiresAt)!==q.quote_expires_at||Number(envelope.quote.domain?.chainId)!==97||envelope.quote.domain?.verifyingContract?.toLowerCase()!==POKTER.commerce.toLowerCase()) throw new Error('Funded terms do not match the signed quote');
   if(acceptedAt>q.quote_expires_at) throw new Error('Funded notification arrived after quote expiry; request a fresh quote');
-  return {job,quote:q,borrower:borrowerFromBrief(envelope.task),reviewWindow:window};
+  return {job,quote:q,borrower:borrowerFromBrief(envelope.task,address(job.client)),reviewWindow:window};
 }
 export async function riskReport(client,config,borrower) {
   const p=jsonSafe(await readPosition(client,config,borrower));

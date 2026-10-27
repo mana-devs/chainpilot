@@ -6,8 +6,9 @@ import assert from 'node:assert/strict';
 const persist=await mkdtemp(join(tmpdir(),'chainpilot-cloud-test-'));
 const port=18787,base=`http://localhost:${port}`;
 let child;
+// Exercise an isolated, non-executing runtime regardless of the live deployment setting.
 async function start(){
- child=spawn(process.execPath,['node_modules/wrangler/bin/wrangler.js','dev','--port',String(port),'--persist-to',persist],{stdio:['ignore','pipe','pipe']});
+ child=spawn(process.execPath,['node_modules/wrangler/bin/wrangler.js','dev','--port',String(port),'--persist-to',persist,'--var','EXECUTION_ENABLED:false'],{stdio:['ignore','pipe','pipe']});
  let output='';for(const stream of [child.stdout,child.stderr])stream.on('data',b=>{output=(output+b).slice(-4000);});
  for(let i=0;i<100;i++){
   if(child.exitCode!==null)throw new Error('Worker exited: '+output);

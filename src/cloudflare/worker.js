@@ -159,10 +159,11 @@ export class ChainPilotAgent extends DurableObject {
         if(body.method!=='message/send')return reply({jsonrpc:'2.0',id:body.id??null,error:{code:-32601,message:'Use message/send'}});
         const parts=body.params?.message?.parts||[];const data=parts.find(p=>p.kind==='data')?.data||{};
         let result;
+        console.log('a2a message',JSON.stringify({skill:data.skill,kinds:parts.map(p=>p.kind),keys:Object.keys(data),chain_id:data.chain_id,task:String(data.task_description||parts.map(p=>p.text||'').join(' ')).slice(0,200)}));
         if(data.skill==='negotiate'){
           try{await verifyIdentity(this.client,c,this.account.address);if(!c.executionEnabled)throw new Error('Paid delivery is not enabled yet; use the free preview');
             const q=await makeQuote(this.account,data);await this.ctx.storage.put(`quote:${q.negotiation_hash}`,q);result=q;
-          }catch(e){result={response:{accepted:false,reason:errorMessage(e)}};}
+          }catch(e){console.log('negotiate declined',errorMessage(e),JSON.stringify({task:String(data.task_description).slice(0,300),chain_id:data.chain_id,escrow_chains:data.escrow_chains}));result={response:{accepted:false,reason:errorMessage(e)}};}
         }else if(data.skill==='notify_funded'){
           const id=String(data.job_id);const existing=await this.ctx.storage.get(`job:${id}`)||await this.ctx.storage.get(`history:${id}`);
           if(existing)result={status:'accepted',job_id:id};
